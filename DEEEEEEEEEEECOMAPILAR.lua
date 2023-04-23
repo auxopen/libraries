@@ -455,7 +455,7 @@ local function decompile_script(a1, showOps)
                     end
                 end
 
-                output = output .. "LABEL_" .. tostring(codeIndex) .. ":   "
+                output = output .. "PC_" .. tostring(codeIndex) .. ":   "
 
                 if showOps and opinfo then
                     local str = opinfo.name .. string.rep(" ", 16 - string.len(opinfo.name))
@@ -767,58 +767,58 @@ local function decompile_script(a1, showOps)
                 elseif opc == getOpCode("NFORPREP") then
                     output = output .. string.format("nforprep start - [escape at #%i] -- v%i = iterator", (codeIndex + sBx) + 1, A + 3);
                 elseif opc == getOpCode("NFORLOOP") then
-                    output = output .. string.format("nforloop end - iterate + goto LABEL_%i", codeIndex + sBx);
+                    output = output .. string.format("nforloop end - iterate + goto PC_%i", codeIndex + sBx);
                 elseif opc == getOpCode("PAIRSPREP") then
-                    output = output .. string.format("pairsprep start - [escape at LABEL_%i] -- v%i = key, v%i = value", (codeIndex + sBx) + 1, A + 3, A + 4);
+                    output = output .. string.format("pairsprep start - [escape at PC_%i] -- v%i = key, v%i = value", (codeIndex + sBx) + 1, A + 3, A + 4);
                 elseif opc == getOpCode("PAIRSLOOP") then
-                    output = output .. string.format("pairsloop end - iterate + goto LABEL_%i", codeIndex + sBx);
+                    output = output .. string.format("pairsloop end - iterate + goto PC_%i", codeIndex + sBx);
                 elseif opc == getOpCode("IPAIRSPREP") then
-                    output = output .. string.format("ipairsprep start [escape at LABEL_%i] -- v%i = key, v%i = value", (codeIndex + sBx) + 1, A + 3, A + 4);
+                    output = output .. string.format("ipairsprep start [escape at PC_%i] -- v%i = key, v%i = value", (codeIndex + sBx) + 1, A + 3, A + 4);
                 elseif opc == getOpCode("IPAIRSLOOP") then
-                    output = output .. string.format("ipairsloop end - iterate + goto LABEL_%i", codeIndex + sBx);
+                    output = output .. string.format("ipairsloop end - iterate + goto PC_%i", codeIndex + sBx);
                 elseif opc == getOpCode("TFORLOOP") then
-                    output = output .. string.format("gforloop - iterate + goto LABEL_%i", codeIndex + aux);
+                    output = output .. string.format("gforloop - iterate + goto PC_%i", codeIndex + aux);
                 elseif opc == getOpCode("JUMP") then
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto LABEL_%i", codeIndex + sBx);
+                    output = output .. string.format("goto PC_%i", codeIndex + sBx);
                 elseif opc == getOpCode("JUMPBACK") then
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto LABEL_%i", codeIndex + sBx);
+                    output = output .. string.format("goto PC_%i", codeIndex + sBx);
                 elseif opc == getOpCode("JUMPX") then
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto LABEL_%i", codeIndex + sAx);
+                    output = output .. string.format("goto PC_%i", codeIndex + sAx);
                 elseif opc == getOpCode("JUMPIFEQK") then
                     local k = proto.kTable[aux + 1] or nilValue;
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto LABEL_%i if v%i == %s", codeIndex + sBx, A, (type(k.value) == "string") and ("\"" .. k.value .. "\"") or tostring(k.value));
+                    output = output .. string.format("goto PC_%i if v%i == %s", codeIndex + sBx, A, (type(k.value) == "string") and ("\"" .. k.value .. "\"") or tostring(k.value));
                 elseif opc == getOpCode("JUMPIFNOTEQK") then
                     local k = proto.kTable[aux + 1] or nilValue;
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto LABEL_%i if v%i ~= %s", codeIndex + sBx, A, (type(k.value) == "string") and ("\"" .. k.value .. "\"") or tostring(k.value));
+                    output = output .. string.format("goto PC_%i if v%i ~= %s", codeIndex + sBx, A, (type(k.value) == "string") and ("\"" .. k.value .. "\"") or tostring(k.value));
                 elseif opc == getOpCode("JUMPIF") then
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto LABEL_%i if v%i", codeIndex + sBx, A);
+                    output = output .. string.format("goto PC_%i if v%i", codeIndex + sBx, A);
                 elseif opc == getOpCode("JUMPIFNOT") then
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto LABEL_%i if not v%i", codeIndex + sBx, A);
+                    output = output .. string.format("goto PC_%i if not v%i", codeIndex + sBx, A);
                 elseif opc == getOpCode("JUMPIFEQ") then
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto LABEL_%i if v%i == v%i", codeIndex + sBx, A, aux);
+                    output = output .. string.format("goto PC_%i if v%i == v%i", codeIndex + sBx, A, aux);
                 elseif opc == getOpCode("JUMPIFNOTEQ") then
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto LABEL_%i if v%i ~= v%i", codeIndex + sBx, A, aux);
+                    output = output .. string.format("goto PC_%i if v%i ~= v%i", codeIndex + sBx, A, aux);
                 elseif opc == getOpCode("JUMPIFLE") then
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto LABEL_%i if v%i <= v%i", codeIndex + sBx, A, aux);
+                    output = output .. string.format("goto PC_%i if v%i <= v%i", codeIndex + sBx, A, aux);
                 elseif opc == getOpCode("JUMPIFNOTLE") then
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto LABEL_%i if v%i > v%i", codeIndex + sBx, A, aux);
+                    output = output .. string.format("goto PC_%i if v%i > v%i", codeIndex + sBx, A, aux);
                 elseif opc == getOpCode("JUMPIFLT") then
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto LABEL_%i if v%i < v%i", codeIndex + sBx, A, aux);
+                    output = output .. string.format("goto PC_%i if v%i < v%i", codeIndex + sBx, A, aux);
                 elseif opc == getOpCode("JUMPIFNOTLT") then
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto LABEL_%i if v%i >= v%i", codeIndex + sBx, A, aux);
+                    output = output .. string.format("goto PC_%i if v%i >= v%i", codeIndex + sBx, A, aux);
                 elseif opc == getOpCode("ADD") then
                     output = output .. string.format("v%i = v%i + v%i", A, B, C);
                 elseif opc == getOpCode("ADDK") then
@@ -1022,7 +1022,10 @@ local function decompile_script(a1, showOps)
 
         addTabSpace(depth)
 
-        output = output .. "end\n"
+        if (proto.source == nil or proto.source ~= "main") then 
+            output = output .. "end\n"
+        end
+        
         return output;
     end
 
