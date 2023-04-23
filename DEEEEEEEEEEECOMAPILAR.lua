@@ -191,6 +191,21 @@ local function get_constant_string(k)
     return k
 end 
 
+local function is_whitespace(k)
+    local old_str = k;
+    k = k:gsub("\"", "\\\"")
+    k = k:gsub("\\", "\\\\")
+    k = k:gsub("\a", "\\a")
+    k = k:gsub("\b", "\\b")
+    k = k:gsub("\f", "\\f")
+    k = k:gsub("\n", "\\n")
+    k = k:gsub("\r", "\\r")
+    k = k:gsub("\t", "\\t")
+    k = k:gsub("\v", "\\v")
+    k = k:gsub("\32", "_")
+    return (old_str ~= k)
+end
+
 local fast_call_string = {
     [0] = "UNKNOWN_FASTCALL",
     "assert",
@@ -448,7 +463,7 @@ local function decompile_script(a1, showOps)
             output = output .. "-- this script was decompiled by cherry\n";
         else 
             for i = 1,proto.numParams do
-                output = output .. "arg" .. (i - 1) -- args coincide with stack index
+                output = output .. "a" .. (i - 1) -- args coincide with stack index
                 if i < proto.numParams then
                     output = output .. ", "
                 end
@@ -467,7 +482,7 @@ local function decompile_script(a1, showOps)
 
         for i = 1,proto.numParams do
             addTabSpace(depth);
-            output = output .. string.format("local v%i = arg%i\n", i - 1, i - 1);
+            output = output .. string.format("local v%i = a%i\n", i - 1, i - 1);
         end
 
         local refData = {}
@@ -505,19 +520,19 @@ local function decompile_script(a1, showOps)
                     local str = opinfo.name .. string.rep(" ", 16 - string.len(opinfo.name))
 
                     if opinfo.type == "iA" then
-                        str = str .. string.format("%i", A)
+                        str = str .. string.format("A = %i\n", A)
                     elseif opinfo.type == "iAB" then
-                        str = str .. string.format("%i %i", A, B)
+                        str = str .. string.format(" A = %i B = %i", A, B)
                     elseif opinfo.type == "iAC" then
-                        str = str .. string.format("%i %i", A, C)
+                        str = str .. string.format("A = %i C = %i", A, C)
                     elseif opinfo.type == "iABx" then
-                        str = str .. string.format("%i %i", A, Bx)
+                        str = str .. string.format("A = %i Bx = %i", A, Bx)
                     elseif opinfo.type == "iAsBx" then
-                        str = str .. string.format("%i %i", A, sBx)
+                        str = str .. string.format("A = %i sBx = %i", A, sBx)
                     elseif opinfo.type == "isBx" then
-                        str = str .. string.format("%i", sBx)
+                        str = str .. string.format("sBx = %i", sBx)
                     elseif opinfo.type == "iABC" then
-                        str = str .. string.format("%i %i %i", A, B, C)
+                        str = str .. string.format("A = %i B = %i C = %i", A, B, C)
                     end
 
                     if opinfo.aux then
@@ -525,7 +540,8 @@ local function decompile_script(a1, showOps)
                         markedAux = true
                     end
 
-                    output = output .. str .. string.rep(" ", 40 - string.len(str))
+
+                    output = output .. "--" .. str .. string.rep(" ", 40 - string.len(str)) .. "\n"
                 else
                     if opinfo then
                         if opinfo.aux then
@@ -577,10 +593,10 @@ local function decompile_script(a1, showOps)
                     output = output .. "break"
                 elseif opc == getOpCode("LOADK") then
                     local k = proto.kTable[Bx + 1] or nilValue;
-                    output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = %s", A, (type(k.value) == "string") and ("\"" .. k.value .. "\"") or tostring(k.value))
+                    output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = %s", A, get_constant_string(k.value))
                 elseif opc == getOpCode("LOADKX") then
                     local k = proto.kTable[aux + 1] or nilValue;
-                    output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = %s", A, (type(k.value) == "string") and ("\"" .. k.value .. "\"") or tostring(k.value))
+                    output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = %s", A, get_constant_string(k.value))
                 elseif opc == getOpCode("LOADB") then
                     output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = %s", A, tostring(B == 1))
                 elseif opc == getOpCode("LOADN") then
@@ -607,10 +623,10 @@ local function decompile_script(a1, showOps)
                     output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = v%i or v%i", A, B, C)
                 elseif opc == getOpCode("ANDK") then
                     local k = proto.kTable[C + 1] or nilValue;
-                    output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = v%i and %s", A, B, tostring(k.value))
+                    output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = v%i and %s", A, B, get_constant_string(k.value))
                 elseif opc == getOpCode("ORK") then
                     local k = proto.kTable[C + 1] or nilValue;
-                    output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = v%i or %s", A, B, tostring(k.value))
+                    output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = v%i or %s", A, B, get_constant_string(k.value))
                 elseif opc == getOpCode("FASTCALL") then
                     local bfid = A;
                     local skip = C;
@@ -640,10 +656,10 @@ local function decompile_script(a1, showOps)
 
                     output = output .. fast_function_name .. "("
 
-                    if nparams > 1 then
-                        for j = 1, B - 1 do
+                    if nparams >= 1 then
+                        for j = 1, nparams - 1 do
                             output = output .. string.format("v%i", call_a + j)
-                            if j < B - 1 then output = output .. ", " end
+                            if j < nparams - 1 then output = output .. ", " end
                         end
                     elseif nparams == 0 then
                         output = output .. string.format("v%i, ...", A + 1);
@@ -660,7 +676,7 @@ local function decompile_script(a1, showOps)
                     local call_a = luau.GETARG_A(call)
 
                     local nparams = 1
-                    local nresults = luau.GETARG_C(call)
+                    local nresults = luau.GETARG_B(call)
 
                     local fast_function_name = fast_call_string[bfid];
 
@@ -680,10 +696,10 @@ local function decompile_script(a1, showOps)
 
                     output = output .. fast_function_name .. "("
 
-                    if nparams > 1 then
-                        for j = 1, B - 1 do
+                    if nparams >= 1 then
+                        for j = 1, nparams do
                             output = output .. string.format("v%i", call_a + j)
-                            if j < B - 1 then output = output .. ", " end
+                            if j < nparams then output = output .. ", " end
                         end
                     elseif nparams == 0 then
                         output = output .. string.format("v%i, ...", call_a + 1);
@@ -700,7 +716,7 @@ local function decompile_script(a1, showOps)
                     local call_a = luau.GETARG_A(call)
 
                     local nparams = 2
-                    local nresults = luau.GETARG_C(call)
+                    local nresults = luau.GETARG_B(call)
 
                     local fast_function_name = fast_call_string[bfid];
 
@@ -720,10 +736,10 @@ local function decompile_script(a1, showOps)
 
                     output = output .. fast_function_name .. "("
 
-                    if nparams > 1 then
-                        for j = 1, B - 1 do
+                    if nparams >= 1 then
+                        for j = 1, nparams do
                             output = output .. string.format("v%i", call_a + j)
-                            if j < B - 1 then output = output .. ", " end
+                            if j < nparams then output = output .. ", " end
                         end
                     elseif nparams == 0 then
                         output = output .. string.format("v%i, ...", call_a + 1);
@@ -739,8 +755,8 @@ local function decompile_script(a1, showOps)
                     local call = proto.codeTable[skip];
                     local call_a = luau.GETARG_A(call)
 
-                    local nparams = 1
-                    local nresults = luau.GETARG_C(call)
+                    local nparams = 2
+                    local nresults = luau.GETARG_B(call)
 
                     local fast_function_name = fast_call_string[bfid];
 
@@ -760,10 +776,10 @@ local function decompile_script(a1, showOps)
 
                     output = output .. fast_function_name .. "("
 
-                    if nparams > 1 then
-                        for j = 1, B - 1 do
+                    if nparams >= 1 then
+                        for j = 1, nparams do
                             output = output .. string.format("v%i", call_a + j)
-                            if j < B - 1 then output = output .. ", " end
+                            if j < nparams then output = output .. ", " end
                         end
                     elseif nparams == 0 then
                         output = output .. string.format("v%i, ...", call_a + 1);
@@ -812,16 +828,37 @@ local function decompile_script(a1, showOps)
                     output = output .. string.format("v%i[%i] = v%i", B, C - 1, A)
                 elseif opc == getOpCode("GETTABLEKS") then
                     local k = proto.kTable[aux + 1] or nilValue;
-                    output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = v%i[%s]", A, B, (type(k.value) == "string") and ("\"" .. k.value .. "\"") or tostring(k.value))
+
+                    if (type(k.value) == "string") then 
+                        if (is_whitespace(k.value) == false) then 
+                            output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = v%i.%s", A, B, k.value)
+                        else 
+                            output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = v%i[%s]", A, B, get_constant_string(k.value))
+                        end
+                    else 
+                        output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = v%i[%s]", A, B, get_constant_string(k.value))
+                    end
                 elseif opc == getOpCode("SETTABLEKS") then
                     local k = proto.kTable[aux + 1] or nilValue;
-                    output = output .. string.format("v%i[%s] = v%i", B, (type(k.value) == "string") and ("\"" .. k.value .. "\"") or tostring(k.value), A)
+
+                    if (type(k.value) == "string") then 
+                        if (is_whitespace(k.value) == false) then 
+                            output = output .. string.format("v%i.%s = v%i", B, k.value, A)
+                        else 
+                            output = output .. string.format("v%i[%s] = v%i", B, get_constant_string(k.value), A)
+                        end
+                    else 
+                        output = output .. string.format("v%i[%s] = v%i", B, get_constant_string(k.value), A)
+                    end
                 elseif opc == getOpCode("NAMECALL") then
                     local k = proto.kTable[aux + 1] or nilValue;
                     nameCall = string.format("v%i:%s", B, tostring(k.value))
                     markedAux = true;
                 elseif opc == getOpCode("NFORPREP") then
                     output = output .. string.format("-- nforprep start - [escape at #%i] -- v%i = iterator", (codeIndex + sBx) + 1, A + 3);
+
+                    --output = output .. "for v%i="
+
                 elseif opc == getOpCode("NFORLOOP") then
                     output = output .. string.format("-- nforloop end - iterate + goto PC_%i", codeIndex + sBx);
                 elseif opc == getOpCode("PAIRSPREP") then
@@ -830,38 +867,42 @@ local function decompile_script(a1, showOps)
                     output = output .. string.format("-- pairsloop end - iterate + goto PC_%i", codeIndex + sBx);
                 elseif opc == getOpCode("IPAIRSPREP") then
                     output = output .. string.format("-- ipairsprep start [escape at PC_%i] -- v%i = key, v%i = value", (codeIndex + sBx) + 1, A + 3, A + 4);
+
+                    --output = output .. "for v%i, v%i in ipairs(v%i"
+
                 elseif opc == getOpCode("IPAIRSLOOP") then
                     output = output .. string.format("-- ipairsloop end - iterate + goto PC_%i", codeIndex + sBx);
                 elseif opc == getOpCode("TFORLOOP") then
                     output = output .. string.format("-- gforloop - iterate + goto PC_%i", codeIndex + aux);
                 elseif opc == getOpCode("JUMP") then
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto PC_%i", codeIndex + sBx);
+                    output = output .. string.format("-- goto PC_%i", codeIndex + sBx);
                 elseif opc == getOpCode("JUMPBACK") then
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto PC_%i", codeIndex + sBx);
+                    output = output .. string.format("-- goto PC_%i", codeIndex + sBx);
                 elseif opc == getOpCode("JUMPX") then
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto PC_%i", codeIndex + sAx);
+                    output = output .. string.format("-- goto PC_%i", codeIndex + sAx);
                 elseif opc == getOpCode("JUMPIFEQK") then
                     local k = proto.kTable[aux + 1] or nilValue;
                     addReference(codeIndex, codeIndex + sBx);
 
+                    output ..= ("-- JUMPIFEQK | A = %d | B = %d | C = %d | sBx = %d\n"):format(A, B, C, sBx)
                     local str = "if (v%1 == %s) then\n"
-                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth + 1) .. "-- goto PC_%i\n"
                     str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, get_constant_string(k.value), codeIndex + sBx)
 
-                    --output = output .. string.format("goto PC_%i if v%i == %s", codeIndex + sBx, A, (type(k.value) == "string") and ("\"" .. k.value .. "\"") or tostring(k.value));
+                    --output = output .. string.format("goto PC_%i if v%i == %s", codeIndex + sBx, A, get_constant_string(k.value));
                 elseif opc == getOpCode("JUMPIFNOTEQK") then
                     local k = proto.kTable[aux + 1] or nilValue;
                     addReference(codeIndex, codeIndex + sBx);
 
                     --output = output .. string.format("goto PC_%i if not v%i", codeIndex + sBx, A);
-
+                    output ..= ("-- JUMPIFNOTEQK | A = %d | B = %d | C = %d | sBx = %d\n"):format(A, B, C, sBx)
                     local str = "if (v%1 ~= %s) then\n"
-                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth + 1) .. "-- goto PC_%i\n"
                     str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, get_constant_string(k.value), codeIndex + sBx)
@@ -869,8 +910,9 @@ local function decompile_script(a1, showOps)
                     addReference(codeIndex, codeIndex + sBx);
                     --output = output .. string.format("goto PC_%i if not v%i", codeIndex + sBx, A);
 
+                    output ..= ("-- JUMPIF | A = %d | B = %d | C = %d | sBx = %d\n"):format(A, B, C, sBx)
                     local str = "if (v%i) then\n"
-                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth + 1) .. "-- goto PC_%i\n"
                     str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, codeIndex + sBx)
@@ -878,52 +920,61 @@ local function decompile_script(a1, showOps)
                     addReference(codeIndex, codeIndex + sBx);
                     --output = output .. string.format("goto PC_%i if not v%i", codeIndex + sBx, A);
 
+                    output ..= ("-- JUMPIFNOT | A = %d | B = %d | C = %d | sBx = %d\n"):format(A, B, C, sBx)
                     local str = "if (not v%i) then\n"
-                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth + 1) .. "-- goto PC_%i\n"
                     str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, codeIndex + sBx)
                 elseif opc == getOpCode("JUMPIFEQ") then
                     addReference(codeIndex, codeIndex + sBx);
+
+                    output ..= ("-- JUMPIFEQ | A = %d | B = %d | C = %d | sBx = %d\n"):format(A, B, C, sBx)
                     local str = "if (v%i == v%i) then\n"
-                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth + 1) .. "-- goto PC_%i\n"
                     str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, aux, codeIndex + sBx)
                 elseif opc == getOpCode("JUMPIFNOTEQ") then
                     addReference(codeIndex, codeIndex + sBx);
+
+                    output ..= ("-- JUMPIFNOTEQ | A = %d | B = %d | C = %d | sBx = %d\n"):format(A, B, C, sBx)
                     local str = "if (v%i ~= v%i) then\n"
-                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth + 1) .. "-- goto PC_%i\n"
                     str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, aux, codeIndex + sBx)
                 elseif opc == getOpCode("JUMPIFLE") then
                     addReference(codeIndex, codeIndex + sBx);
                     local str = "if (v%i <= v%i) then\n"
-                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth + 1) .. "-- goto PC_%i\n"
                     str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, aux, codeIndex + sBx)
                 elseif opc == getOpCode("JUMPIFNOTLE") then
                     addReference(codeIndex, codeIndex + sBx);
+
+                    output ..= ("-- JUMPIFNOTLE | A = %d | B = %d | C = %d | sBx = %d\n"):format(A, B, C, sBx)
                     local str = "if (v%i > v%i) then\n"
-                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth + 1) .. "-- goto PC_%i\n"
                     str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, aux, codeIndex + sBx)
                 elseif opc == getOpCode("JUMPIFLT") then
                     addReference(codeIndex, codeIndex + sBx);
 
+                    output ..= ("-- JUMPIFLT | A = %d | B = %d | C = %d | sBx = %d\n"):format(A, B, C, sBx)
                     local str = "if (v%i < v%i) then\n"
-                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth + 1) .. "-- goto PC_%i\n"
                     str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, aux, codeIndex + sBx)
                 elseif opc == getOpCode("JUMPIFNOTLT") then
                     addReference(codeIndex, codeIndex + sBx);
 
+                    output ..= ("-- JUMPIFNOTLT | A = %d | B = %d | C = %d | sBx = %d\n"):format(A, B, C, sBx)
                     local str = "if (v%i >= v%i) then\n"
-                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth + 1) .. "-- goto PC_%i\n"
                     str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, aux, codeIndex + sBx)
@@ -971,21 +1022,41 @@ local function decompile_script(a1, showOps)
                         --    output = output .. string.format("v%i", A + j - 1)
                         --    if j < proto.maxStackSize - 1 then output = output .. ", " end
                         --end
+                    elseif C == -1 then
+                        output = output .. string.format("...", A);
+                        output = output .. " = "
+                        --for j = 1, proto.maxStackSize do
+                        --    output = output .. string.format("v%i", A + j - 1)
+                        --    if j < proto.maxStackSize - 1 then output = output .. ", " end
+                        --end
                     end
+
                     if nameCall then
                         output = output .. nameCall .. "(";
                     else
                         output = output .. string.format("v%i(", A)
                     end
+
                     if B > 1 then
                         if nameCall then
+                            local looped = false
                             for j = 1, B - 2 do
-                                output = output .. string.format("v%i", A + 1 + j) -- exclude self
+                                output = output .. string.format("v%i, ", A + 1 + j) -- exclude self
+                                looped = true
+                            end
+
+                            if (looped) then 
+                                output = output:sub(0, output:len() - 2)
                             end
                         else
+                            local looped = false
                             for j = 1, B - 1 do
-                                output = output .. string.format("v%i", A + j)
-                                if j < B - 1 then output = output .. ", " end
+                                output = output .. string.format("v%i, ", A + j)
+                                looped = true
+                            end
+
+                            if (looped) then 
+                                output = output:sub(0, output:len() - 2)
                             end
                         end
                     elseif B == 0 then
@@ -1009,7 +1080,7 @@ local function decompile_script(a1, showOps)
                     for j = 1,t.size do
                         local id = t.ids[j];
                         local k = proto.kTable[id];
-                        output = output .. ((type(k.value) == "string") and ("\"" .. k.value .. "\"") or tostring(k.value))
+                        output = output .. (get_constant_string(k.value))
                         if j < t.size then
                             output = output .. ", ";
                         end
@@ -1040,9 +1111,9 @@ local function decompile_script(a1, showOps)
 
                             addTabSpace(depth);
                             if captureType == 0 or captureType == 1 then
-                                --output = output .. string.format("-- nested upvs[%i] = v%i\n", upvalueIndex, captureIndex)
+                                output = output .. string.format("-- upvs[%i] = v%i\n", upvalueIndex, captureIndex)
                             elseif captureType == 2 then
-                                --output = output .. string.format("-- nested upvs[%i] = upvs[%i]\n", upvalueIndex, captureIndex)
+                                output = output .. string.format("-- upvs[%i] = upvs[%i]\n", upvalueIndex, captureIndex)
                             else
                                 error("[NEWCLOSURE] Invalid capture type");
                             end
@@ -1076,9 +1147,9 @@ local function decompile_script(a1, showOps)
 
                             addTabSpace(depth);
                             if captureType == 0 or captureType == 1 then
-                                output = output .. string.format("-- nested upvs[%i] = v%i\n", upvalueIndex, captureIndex)
+                                output = output .. string.format("-- upvs[%i] = v%i\n", upvalueIndex, captureIndex)
                             elseif captureType == 2 then
-                                output = output .. string.format("-- nested upvs[%i] = upvs[%i]\n", upvalueIndex, captureIndex)
+                                output = output .. string.format("-- upvs[%i] = upvs[%i]\n", upvalueIndex, captureIndex)
                             else
                                 error("[DUPCLOSURE] Invalid capture type");
                             end
@@ -1144,5 +1215,11 @@ local function decompile_script(a1, showOps)
 end
 
 getgenv().decompile = newcclosure(function(script)
-    return decompile_script(script);
+    local success, ret = pcall(decompile_script, script, false);
+
+    if (success == false) then 
+        return "-- script was unable to decompile or ignored"
+    end
+
+    return ret
 end)
