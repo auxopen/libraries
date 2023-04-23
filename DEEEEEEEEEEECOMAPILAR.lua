@@ -624,6 +624,9 @@ local function decompile_script(a1, showOps)
                     nparams = (nparams == -1 and -1 or nparams);
                     local fast_function_name = fast_call_string[bfid];
 
+                    output ..= "-- FASTCALL (" .. fast_function_name .. ") nparams = " .. tostring(nparams) .. " nresults = " .. nresults .. "\n";
+                    output ..= "-- A = " .. tostring(bfid) .. "  B = " .. tostring(B) .."  C = " .. tostring(skip) .. "\n"
+
                     if (nresults > 1) then 
                         for j = 1, nresults - 1 do
                             output = output .. string.format("v%i", call_a + j - 1)
@@ -660,6 +663,9 @@ local function decompile_script(a1, showOps)
                     local nresults = luau.GETARG_C(call)
 
                     local fast_function_name = fast_call_string[bfid];
+
+                    output ..= "-- FASTCALL1 (" .. fast_function_name .. ") nparams = " .. tostring(nparams) .. " nresults = " .. nresults .. "\n";
+                    output ..= "-- A = " .. tostring(bfid) .. "  B = " .. tostring(B) .."  C = " .. tostring(skip) .. "\n"
 
                     if (nresults > 1) then 
                         for j = 1, nresults - 1 do
@@ -698,6 +704,9 @@ local function decompile_script(a1, showOps)
 
                     local fast_function_name = fast_call_string[bfid];
 
+                    output ..= "-- FASTCALL2 (" .. fast_function_name .. ") nparams = " .. tostring(nparams) .. " nresults = " .. nresults .. "\n";
+                    output ..= "-- A = " .. tostring(bfid) .. "  B = " .. tostring(B) .."  C = " .. tostring(skip) .. "\n"
+
                     if (nresults > 1) then 
                         for j = 1, nresults - 1 do
                             output = output .. string.format("v%i", call_a + j - 1)
@@ -734,6 +743,9 @@ local function decompile_script(a1, showOps)
                     local nresults = luau.GETARG_C(call)
 
                     local fast_function_name = fast_call_string[bfid];
+
+                    output ..= "-- FASTCALL2K (" .. fast_function_name .. ") nparams = " .. tostring(nparams) .. " nresults = " .. nresults .. "\n";
+                    output ..= "-- A = " .. tostring(bfid) .. "  B = " .. tostring(B) .."  C = " .. tostring(skip) .. "\n"
 
                     if (nresults > 1) then 
                         for j = 1, nresults - 1 do
@@ -1028,9 +1040,9 @@ local function decompile_script(a1, showOps)
 
                             addTabSpace(depth);
                             if captureType == 0 or captureType == 1 then
-                                output = output .. string.format("-- nested upvs[%i] = v%i\n", upvalueIndex, captureIndex)
+                                --output = output .. string.format("-- nested upvs[%i] = v%i\n", upvalueIndex, captureIndex)
                             elseif captureType == 2 then
-                                output = output .. string.format("-- nested upvs[%i] = upvs[%i]\n", upvalueIndex, captureIndex)
+                                --output = output .. string.format("-- nested upvs[%i] = upvs[%i]\n", upvalueIndex, captureIndex)
                             else
                                 error("[NEWCLOSURE] Invalid capture type");
                             end
