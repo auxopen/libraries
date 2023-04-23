@@ -455,7 +455,7 @@ local function decompile_script(a1, showOps)
                     end
                 end
 
-                output = output .. "PC_" .. tostring(codeIndex) .. ":   "
+                --output = output .. "PC_" .. tostring(codeIndex) .. ":   "
 
                 if showOps and opinfo then
                     local str = opinfo.name .. string.rep(" ", 16 - string.len(opinfo.name))
