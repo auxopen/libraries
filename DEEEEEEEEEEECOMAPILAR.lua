@@ -206,6 +206,21 @@ local function is_whitespace(k)
     return (old_str ~= k)
 end
 
+local fast_call_data = {
+    { "UNKNOWN_FASTCALL", 0, 0 }, -- name, arguments, results
+    { "assert", 2, -1 },
+
+    -- math
+    { "math.abs", 1, 1 },
+    { "math.acos", 1, 1 },
+    { "math.asin", 1, 1 },
+    { "math.atan2", 1, 1 },
+    { "math.ceil", 1, 1 },
+    { "math.deg", 1, 1 },
+    { "math.exp", 1, 1 },
+    { "math.floor", 1, 1 },
+}
+
 local fast_call_string = {
     [0] = "UNKNOWN_FASTCALL",
     "assert",
@@ -460,7 +475,7 @@ local function decompile_script(a1, showOps)
         end
 
         if (proto.source and proto.source == "main") then 
-            output = output .. "-- this script was decompiled by cherry\n";
+            output = output .. ("-- this script was decompiled by %s\n"):format(identifyexecutor());
         else 
             for i = 1,proto.numParams do
                 output = output .. "a" .. (i - 1) -- args coincide with stack index
@@ -802,13 +817,47 @@ local function decompile_script(a1, showOps)
                         local k1 = proto.kTable[cacheIndex1 + 1];
                         local k2 = proto.kTable[cacheIndex2 + 1];
 
-                        output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = %s[\"%s\"]", A, k1.value, tostring(k2.value))
+                        output = output .. (isVarDefined(A) and "" or "local ") .. ("v%i = %s"):format(A, k1.value)
+
+                        if (type(k2.value) == "string") then 
+                            if (is_whitespace(k2.value) == false) then 
+                                output = output .. (isVarDefined(A) and "" or "local ") .. string.format(".%s", A, B, k2.value)
+                            else 
+                                output = output .. (isVarDefined(A) and "" or "local ") .. string.format("[%s]", A, B, get_constant_string(k2.value))
+                            end
+                        else 
+                            output = output .. (isVarDefined(A) and "" or "local ") .. string.format("[%s]", A, B, get_constant_string(k2.value))
+                        end
+
+                        --output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = %s[\"%s\"]", A, k1.value, tostring(k2.value))
                     elseif indexCount == 3 then
                         local k1 = proto.kTable[cacheIndex1 + 1];
                         local k2 = proto.kTable[cacheIndex2 + 1];
                         local k3 = proto.kTable[cacheIndex3 + 1];
 
-                        output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = %s[\"%s\"][\"%s\"]", A, k1.value, tostring(k2.value), tostring(k3.value))
+                        output = output .. (isVarDefined(A) and "" or "local ") .. ("v%i = %s"):format(A, k1.value)
+
+                        if (type(k2.value) == "string") then 
+                            if (is_whitespace(k2.value) == false) then 
+                                output = output .. (isVarDefined(A) and "" or "local ") .. string.format(".%s", A, B, k2.value)
+                            else 
+                                output = output .. (isVarDefined(A) and "" or "local ") .. string.format("[%s]", A, B, get_constant_string(k2.value))
+                            end
+                        else 
+                            output = output .. (isVarDefined(A) and "" or "local ") .. string.format("[%s]", A, B, get_constant_string(k2.value))
+                        end
+
+                        if (type(k3.value) == "string") then 
+                            if (is_whitespace(k3.value) == false) then 
+                                output = output .. (isVarDefined(A) and "" or "local ") .. string.format(".%s", A, B, k3.value)
+                            else 
+                                output = output .. (isVarDefined(A) and "" or "local ") .. string.format("[%s]", A, B, get_constant_string(k3.value))
+                            end
+                        else 
+                            output = output .. (isVarDefined(A) and "" or "local ") .. string.format("[%s]", A, B, get_constant_string(k3.value))
+                        end
+
+                        --output = output .. (isVarDefined(A) and "" or "local ") .. string.format("v%i = %s[\"%s\"][\"%s\"]", A, k1.value, tostring(k2.value), tostring(k3.value))
                     else
                         error("[GETIMPORT] Too many entries");
                     end
