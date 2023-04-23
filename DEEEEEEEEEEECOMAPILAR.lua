@@ -836,8 +836,8 @@ local function decompile_script(a1, showOps)
                     addReference(codeIndex, codeIndex + sBx);
 
                     local str = "if (v%1 == %s) then\n"
-                    str = str .. string.rep("\t", depth + 1) .. "goto PC_%i\n"
-                    str = str .. string.rep("\t", depth) .. "end"
+                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, get_constant_string(k.value), codeIndex + sBx)
 
@@ -849,70 +849,70 @@ local function decompile_script(a1, showOps)
                     --output = output .. string.format("goto PC_%i if not v%i", codeIndex + sBx, A);
 
                     local str = "if (v%1 ~= %s) then\n"
-                    str = str .. string.rep("\t", depth + 1) .. "goto PC_%i\n"
-                    str = str .. string.rep("\t", depth) .. "end"
+                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, get_constant_string(k.value), codeIndex + sBx)
                 elseif opc == getOpCode("JUMPIF") then
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto PC_%i if not v%i", codeIndex + sBx, A);
+                    --output = output .. string.format("goto PC_%i if not v%i", codeIndex + sBx, A);
 
                     local str = "if (v%i) then\n"
-                    str = str .. string.rep("\t", depth + 1) .. "goto PC_%i\n"
-                    str = str .. string.rep("\t", depth) .. "end"
+                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, codeIndex + sBx)
                 elseif opc == getOpCode("JUMPIFNOT") then
                     addReference(codeIndex, codeIndex + sBx);
-                    output = output .. string.format("goto PC_%i if not v%i", codeIndex + sBx, A);
+                    --output = output .. string.format("goto PC_%i if not v%i", codeIndex + sBx, A);
 
                     local str = "if (not v%i) then\n"
-                    str = str .. string.rep("\t", depth + 1) .. "goto PC_%i\n"
-                    str = str .. string.rep("\t", depth) .. "end"
+                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, codeIndex + sBx)
                 elseif opc == getOpCode("JUMPIFEQ") then
                     addReference(codeIndex, codeIndex + sBx);
                     local str = "if (v%i == v%i) then\n"
-                    str = str .. string.rep("\t", depth + 1) .. "goto PC_%i\n"
-                    str = str .. string.rep("\t", depth) .. "end"
+                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, aux, codeIndex + sBx)
                 elseif opc == getOpCode("JUMPIFNOTEQ") then
                     addReference(codeIndex, codeIndex + sBx);
                     local str = "if (v%i ~= v%i) then\n"
-                    str = str .. string.rep("\t", depth + 1) .. "goto PC_%i\n"
-                    str = str .. string.rep("\t", depth) .. "end"
+                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, aux, codeIndex + sBx)
                 elseif opc == getOpCode("JUMPIFLE") then
                     addReference(codeIndex, codeIndex + sBx);
                     local str = "if (v%i <= v%i) then\n"
-                    str = str .. string.rep("\t", depth + 1) .. "goto PC_%i\n"
-                    str = str .. string.rep("\t", depth) .. "end"
+                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, aux, codeIndex + sBx)
                 elseif opc == getOpCode("JUMPIFNOTLE") then
                     addReference(codeIndex, codeIndex + sBx);
                     local str = "if (v%i > v%i) then\n"
-                    str = str .. string.rep("\t", depth + 1) .. "goto PC_%i\n"
-                    str = str .. string.rep("\t", depth) .. "end"
+                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, aux, codeIndex + sBx)
                 elseif opc == getOpCode("JUMPIFLT") then
                     addReference(codeIndex, codeIndex + sBx);
 
                     local str = "if (v%i < v%i) then\n"
-                    str = str .. string.rep("\t", depth + 1) .. "goto PC_%i\n"
-                    str = str .. string.rep("\t", depth) .. "end"
+                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, aux, codeIndex + sBx)
                 elseif opc == getOpCode("JUMPIFNOTLT") then
                     addReference(codeIndex, codeIndex + sBx);
 
                     local str = "if (v%i >= v%i) then\n"
-                    str = str .. string.rep("\t", depth + 1) .. "goto PC_%i\n"
-                    str = str .. string.rep("\t", depth) .. "end"
+                    str = str .. string.rep("    ", depth + 1) .. "goto PC_%i\n"
+                    str = str .. string.rep("    ", depth) .. "end"
 
                     output = output .. str:format(A, aux, codeIndex + sBx)
                 elseif opc == getOpCode("ADD") then
