@@ -437,9 +437,7 @@ local function decompile_script(a1, showOps)
 
         -- using function name (this will be removed & done outside of readProto)
         if proto.source then
-            if (proto.source == "main") then
-                output = output .. "do"
-            else
+            if (proto.source ~= "main") then
                 output = output .. proto.source .. " = function("
             end
         else
@@ -447,7 +445,7 @@ local function decompile_script(a1, showOps)
         end
 
         if (proto.source and proto.source == "main") then 
-            output = output .. "\n";
+            output = output .. "-- this script was decompiled by cherry\n";
         else 
             for i = 1,proto.numParams do
                 output = output .. "arg" .. (i - 1) -- args coincide with stack index
